@@ -3,3 +3,8 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+
+
+code/ViT/results/
+code/ViT/resultsCNN/
+code/ViT/ViTLoss.png
