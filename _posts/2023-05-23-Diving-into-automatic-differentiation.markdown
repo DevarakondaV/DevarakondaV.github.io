@@ -6,21 +6,18 @@ categories: AI
 ---
 # Intro
 
-For my graduate degree, I did a deep dive into autodifferentiation. I was writing a library that can perform training and inference on arithmetic circuits. Arithmetic circuits are a compiled Bayesian network that use standard operations found
-in neural networks. This lets us use computational engines like TensorFlow to train
-the circuit. For various reasons, we wanted to decouple from TensorFlow and use 
-numpy for differentiation and training. This gave me an opportunity to dive into auto differentiation and understand how deep neural networks are differentiated and trained.
+In my graduate studies, I did a deep dive into autodifferentiation. I was struck by its simplicity and elegance, which inspired me to write this article. I was exploring how to write a library for training and inference on arithmetic circuits. Arithmetic circuits are a compiled Bayesian network that can use standard linear algebra operations. This allows us to train the circuit like a neural network using computational engines like TensorFlow or PyTorch. However, we wanted to decouple from these engines and use NumPy for differentiation and training. This gave me the opportunity to dive headfirst into autodifferentiation and truly appreciate the power of this technique.
 
 # Theory
 
-Autodiff boils down to repeatedly applying the chain rule of differentiation. This rule defines the derivative of a composite function.
+The foundational theory behind autodiff is the chain rule of differentiation. This rule is applied to composite functions. An example is given below.
 
 $$
-Composite\;Function:\;f\dot\;g\dot\;h = f(g(h(x)))\\
+Composite\;Function:\;f\dot\;g = f(g(x))\\
 Chain\;Rule:\;\frac{d}{dx}f(g(x)) = \frac{d}{dg}f(g(x))\frac{d}{dx}g(x)
 $$
 
-The chain rule, lets us differentiate $$f$$ with respect to $$x$$ like below. Note for clarity, some functions are defined with $$g_i$$.
+The chain rule is not limited by the depth of the composite. In fact, it can differentiate composite functions with any arbitrary depth. Below, I give an example of differentiating a composite functions of a composite function like $$f$$. Note that I redefined some functions using $$g_i$$.
 
 $$
 \begin{align*}
@@ -34,7 +31,7 @@ $$
 \end{align*}
 $$
 
-Notice the recursive realtionship present in this defintion. Computing this is straightforward and a trivial example is given below.
+Notice the recursive inherent in this definition. This recursion is exploited in order to compute the derivative of deep neural networks. Computing this is straightforward and a trivial example is given below.
 
 $$
 \begin{align*}
@@ -51,11 +48,10 @@ $$
 \frac{d}{dx}f(g(h(x))) = \frac{df}{dg_2}[\frac{dg_2}{dg_1}[\frac{dg_1}{dg_0}\frac{dg_0}{dx}]] = 4[2[1[1]]] = 8 
 $$
 
-#### Reverse Mode Auto differentiation - Back Propagation
+#### Reverse Mode Auto differentiation
 
-In order to keep this discussion as concise as possible, I've decided to only talk about reverse auto differentation. In the previous secion, we discussion forward mode accumulation. Most deep learning libraries will implement reverse auto differentation (Back Prop) because is it is significationly more efficient when dealing with a large number of variables. Reverse mode lets us compute the function $$y$$ and its derivative in two traversals. 
+In the previous section, we discussed forward mode accumulation autodiff. Most deep learning libraries use an alternative strategy called reverse mode automatic differentiation (backpropagation). Although we will skip the details here, this strategy is significantly more efficient when dealing with a large number of trainable variables. In reverse mode, we differentiate the function with the innermost function first. An example is given below.
 
-In reverse mode, we differentiate the function with the innermost function first. An example is given below.
 
 $$
 \begin{align*}
@@ -69,10 +65,7 @@ $$
 \end{align*}
 $$
 
-Notice that the order of the operations is different from forward mode. This order is what improves the computational efficiency of computing the gradient.
-
-
-Lets increase the complexity of our functions by introducing more variables. We introduce $$w_i$$ which refers to "weights" that one would see in neural networks. Now we differentiate with respect to the weights of the function as one would exepect in neural networks. What we're actually computing is the gradient of the function with respect to its weights.
+Notice how the order of the operations in this approach is different from forward mode. The recursive relation is still present but the derivative with respect to the weights is now outside the parenthesis. This order is what improves the computational efficiency of the entire operation. Lets increase the complexity of the examples and introduce more variables. We introduce weights, represented by $$w_i$$, as the target to differentiate against.
 
 $$
 \begin{align*}
@@ -84,7 +77,7 @@ $$
 \end{align*}
 $$
 
-But there is a problem here when we encounter $$g_3$$. It is a composite function of two variables $$g_1$$ and $$g_2$$. Although not obvious in this example, it is reasonalbe to expect that both $$g_1$$ and $$g_2$$ could be dependent on the same weight. In this scenario, how would one find the derivative of $$y$$ with respect to $$w_1$$? The answer is to apply the total derivatives rule.
+Before we dive into the math,  let's consider a problem that arises when we encounter $$g_3$$. It is a composite function of two variables $$g_1$$ and $$g_2$$. Although not obvious in this example, it is reasonable to expect that both $$g_1$$ and $$g_2$$ could be dependent on the same weight. Additionally, even if they did not depend on the same weight, it is not possible to know at run time which functions and weights are coupled in very large neural networks. In this scenario, how could one find the derivative of $$y$$ with respect to $$w_1$$? The answer is to apply the total derivatives rule.
 
 $$
 \frac{\partial f(w,g_1,g_2,...g_n)}{\partial w} = \frac{\partial f}{\partial w}\frac{\partial w}{\partial w} + 
@@ -150,9 +143,10 @@ $$
 
 #### Vectors and Matricies
 
-Next, we move to taking a look at applying the above theory to vectors and matricies, the real basis supporting deep learning. All machine learning models from transformers to decision trees can be compartamentalized into basic linear algebra operations. Thus, if we can apply the theory discussed before on matricies and their operations, we can effectively differentiate any arbitrary sized neural network. I find this to be mathematically beautiful given its simplicity and extraordinary applicability.
+We now take a look at applying the above theory to vectors and matricies. All machine learning models, from transformers to decision trees, can be decomposed into basic linear algebra operations. Therefore, if we can apply the theory discussed above to matrices and operations on matrices, we can effectively differentiate any arbitrary-sized neural network. This is where the true power of autodiff becomes shines through.
 
-Now lets take a look at a more advanced example to understand how to apply the vector chain rule
+
+Lets start off by looking at a more advanced example using vector functions. For vector functions, we can apply the vector chain rule of differentiation.
 
 $$
 \begin{align*}
@@ -174,7 +168,7 @@ sin(w_1x^3)
 \end{align*}
 $$
 
-Notice that the above equation requires us to use both the chain rule and the total derivative rule once again. Additionally, we introduce $$sin$$ function as an example of an activation function.
+Notice that the above equation requires us to use both the chain rule and the total derivative rule. Additionally, we introduce $$sin$$ function as an example of an activation function.
 
 $$
 \begin{align*}
@@ -188,6 +182,13 @@ $$
 g_4(g_1,g_2) \\
 g_5(g_3)
 \end{bmatrix}\\
+\end{align*}
+$$
+
+Applying the chian rule:
+
+$$
+\begin{align*}
 & \frac{\partial \vec{y}}{\partial w_1} =
 \begin{bmatrix}
 \frac{\partial y_1}{\partial g_1}\frac{\partial g_1}{\partial w_1} + 
@@ -226,7 +227,7 @@ $$
 \end{align*}
 $$
 
-There are two interesting things to observe here. First, we've calculated the gradient of $$\vec{y}$$ as a matrix mutiplication between two jacobian matricies. Second, notice the two matricies are effective decoupled. Each component ($$\frac{\partial y_i}{\partial g_i}$$) of the first matix can itself be represented as a matrix multiplication! A recursive relationship like the one shown below!
+There are two interesting things to observe here. First, we have calculated the gradient of $$\vec{y}$$ as a matrix multiplication between two Jacobian matrices.  Second, notice that the two matrices are effectively decoupled. Each component ($$\frac{\partial y_i}{\partial g_i}$$) of the first matrix can itself be represented as a matrix multiplication! This sets up the recursive relationship between Jacobian matrices like the one shown below!
 
 $$
 \begin{align*}
@@ -238,7 +239,7 @@ $$
 \frac{\partial \boldsymbol{g}}{\partial w_1}
 $$
 
-Finally, notice that the derivative with respect to the weight $$w_1$$ is always outside $$\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{g}}$$. This means that $$\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{g}}$$ is same for all weights saving an enormous amount of computationl resources when computing the gradients for all weights! But, we can do even better by computing the graidents with respect to all weights simultaneous. We compute the derivative of the function with respect to the weight vector $$\vec{w}$$. This only leads to a minor change where $$\frac{\partial \boldsymbol{g}}{\partial w_1}$$ and $$\frac{\partial \vec{y}}{\partial \vec{w}}$$ are now matricies. Most generally the gradient of $$\vec{y}$$ with respect to $$\vec{w}$$ is given by below.
+Finally, notice that the derivative with respect to the weight $$w_1$$ is always outside $$\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{g}}$$. This means that $$\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{g}}$$ is same for all weights, which saves an enormous amount of computational resources when computing the gradients for all weights! But, we can do even better by computing the gradients with respect to all weights simultaneous. We compute the derivative of the function with respect to the weight vector $$\vec{w}$$. This only leads to a minor change where $$\frac{\partial \boldsymbol{g}}{\partial w_1}$$ and $$\frac{\partial \vec{y}}{\partial \vec{w}}$$ are now matrices. Most generally the gradient of $$\vec{y}$$ with respect to $$\vec{w}$$ is given by below.
 
 $$
 \begin{align*}
@@ -261,7 +262,7 @@ $$
 \end{align*}
 $$
 
-Now lets complete the example and make sure we get what we we expect. For brevity, I ignored the recursive relations but the approach should be clear.
+Now lets continue with the the example and make sure we get the expected gradient. For brevity, I ignored the recursive relations but the approach should be clear.
 
 $$
 \begin{align*}
@@ -336,7 +337,7 @@ cos(g_3)
 \end{align*}
 $$
 
-Is this correct? Lets compute the jacobian as it's usually done.
+Is this correct? Lets compute the jacobian without the chain rule.
 
 $$
 \begin{align*}
@@ -354,19 +355,19 @@ $$
 \end{align*}
 $$
 
-Finally, notice that for one of the partial derivatives we derive a $$cosine$$. These values can be calculated while performing the forward pass through the network. Then in the backwards pass, the values can be used to compute the gradient! Finally, we can take a look at the operations in a neural network and write some code.
+Finally, notice that for one of the partial derivatives we need to evaluate $$cos(g_3)$$. Values like this, which appear in the jacobian, are intermediate values in the calculation of the gradient. One can calculate these values while evaluating the function $$\vec{y}$$, a forward pass! Then in the backwards pass, these values can be used to compute the gradient! 
 
 # Operations
 
-Below, I give some examples of very basic operations and their gradients. The code also shows how to structure code in order to build differentiable operations invovled in machine learning. Finally, note that in the quations given below $$J$$ represents the jacobian from the previous operation. If there are no previous operations then this value is simply a matrix of ones.
+Lets take a look at some basic operations and their gradients in code. In the equations below, $$J$$ represents the jacobian from a previous operation. If there are no previous operations then this value is simply a matrix of ones.
 
 #### Addition
 
 Lets start off by looking at adding two matricies and their derivative.
 
 $$
-C = A + B \quad
-\frac{\partial C}{\partial A} = I + 0 = \boldsymbol{J}I \quad
+C = A + B \\
+\frac{\partial C}{\partial A} = I + 0 = \boldsymbol{J}I \\
 \frac{\partial C}{\partial B} = 0 + I = \boldsymbol{J}I
 $$
 
@@ -378,8 +379,8 @@ class Add:
     
     def forward(self, A, B):
         C = A + B
-        self.jacobianA = I
-        self.jacobinaB = I
+        self.jacobianA = I # <----- Intermediate Value
+        self.jacobinaB = I # <----- Intermediate Value
         return C
     
     def backward(self, jacobian):
@@ -396,8 +397,8 @@ JacobianA, JacobianB = Op.backward(1)
 #### Subtraction
 
 $$
-C = A - B \quad
-\frac{\partial C}{\partial A} = I + 0 = \boldsymbol{J}I \quad
+C = A - B \\
+\frac{\partial C}{\partial A} = I + 0 = \boldsymbol{J}I \\
 \frac{\partial C}{\partial B} = 0 - I = -\boldsymbol{J}I
 $$
 
@@ -413,7 +414,7 @@ class Sub:
         return C
     
     def backward(self, prev):
-        return jacobian * self.jacobianA, jacobian * jacobianB
+        return jacobian * self.jacobianA, jacobian * self.jacobianB
 
 A = np.zeros(5,5)
 B = np.zeros(5,5)
@@ -426,8 +427,8 @@ JacobianA, JacobianB = Op.backward(1)
 #### Multiplication
 
 $$
-C = A * B \quad
-\frac{\partial C}{\partial A} = \boldsymbol{J}B \quad
+C = A * B \\
+\frac{\partial C}{\partial A} = \boldsymbol{J}B \\
 \frac{\partial C}{\partial B} = \boldsymbol{J}A
 $$
 
@@ -454,11 +455,11 @@ JacobianA, JacobianB = Op.backward(1)
 
 #### Matrix Multiplication
 
-Differentiating a matrix multiplication is a little tricky. I've given the solution below along with the explanation.
+Differentiating a matrix multiplication is a little tricky. I've given the solution below for brevity.
 
 $$
-C = AB \quad
-\frac{\partial C}{\partial A} = \boldsymbol{J}B^T \quad
+C = AB \\
+\frac{\partial C}{\partial A} = \boldsymbol{J}B^T \\
 \frac{\partial C}{\partial B} = A^T\boldsymbol{J}
 $$
 
@@ -483,9 +484,9 @@ Op.forward(A,B)
 JacobianA, JacobianB = Op.backward(1)
 ```
 
-#### Chained Operations
+#### Chaining Operations
 
-Below, I give an example of chaining operations together and computing the gradient of the entire operation. The chained operations are a corallory to layers in neural network. Below we compute $$f = (A + B)*C$$ and then compute the gradient of $$f$$ with respect to $$A$$ and $$C$$. In the "forward pass" we compute the list of operations and in the backward pass we compute the gradient.
+Here, I give an example of chaining operations together and computing the gradient of the entire function. One can think of this as a "tiny" neural network containing some operations. Below, we compute $$f = (A + B)*C$$ in the forward pass. In the backward pass, we compute the gradient of $$f$$ with respect to $$A$$ and $$C$$. 
 
 ```
 A = np.array()
@@ -502,11 +503,13 @@ E = multiplyOp.forward(D, C)
 [jacobianD, jacobianC] = multiplyOp.backward(np.ones(E.shape))
 [jacobianA, jacobianB] = addOp.backward(jacobianD)
 
+# jacobianA ---- Derivative of f with respect to A
+# jacobianB ---- Derivative of f with respect to B
 ```
 
 #### Conclusion
 
-In this post, we explore the basics of how autodifferentiation works in most machine learning libraries. Often times, I've marveled at mathematics to be beautiful in its simplicity and structure. Autodifferentiation exemplifies an instance of this, where regardless of the complexity of deep neural network, the gradients can be computed with easy. Although not discussed in this post, computing the gradients for a neural network is an $$O(n)$$ operation where $$n$$ is the number of layers. Incredibly, we can get further improvements because lots arithmetic operations produce gradients that are sparse in ways that one could explot. But that's a conversation for another time! 
+In this post, we explored the very basics of how autodifferentiation works in most machine learning libraries. We saw how autodiff can be used to compute the gradients of complex functions, such as deep neural networks, with relative ease. We also talked very briefly about computational cost of different approaches to autodiff. Incredibly, we can get even further computation efficiency by exploiting mathematical symmetries and sparsities present in Jacobians when applying autodiff. But that is a conversation for a different time; here we explore the fascinating simplicity and structure of autodifferentiation.
 
 #### Ref
 
