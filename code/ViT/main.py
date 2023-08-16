@@ -7,126 +7,47 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 
+# torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 DATA_DIR = "/tmp/MNIST"
 BATCH_SIZE = 32
-
-
-# class ViT():
-#     def __init__(self, N, D, H) -> None:
-#         self.flatten = nn.Flatten()
-#         self.linear_projection = nn.Linear(N, D)
-#         self.msa1 = torch.nn.MultiheadAttention(
-#             embed_dim=D, num_heads=H, dropout=True
-#         )
-#         self.norm1_1 = nn.LayerNorm()
-#         self.norm1_2 = nn.LayerNorm()
-#         self.norm1_3 = nn.LayerNorm()
-#         self.mlp1_1 = nn.Linear(D, D)
-#         self.mlp1_2 = nn.Linear(D, D)
-
-#         self.encoders = []
-#         for i in range(16):
-#             self.encoders.append(
-#                 [
-#                     nn.LayerNorm(),
-#                     nn.MultiheadAttention(
-#                         embed_dim=D,
-#                         num_heads=H,
-#                         dropout=True
-#                     ),
-#                     nn.LayerNorm(),
-#                     nn.Linear(D, D),
-#                     nn.GELU(),
-#                     nn.LayerNorm(),
-#                     nn.Linear(D, D),
-#                     nn.LayerNorm(),
-#                     nn.GELU(),
-#                     nn.LayerNorm()
-#                 ]
-#             )
-#         return
-
-#     def forward(self, x: torch.Tensor, y, training=False):
-#         x = self.flatten(x)
-#         x = self.linear_projection(x)
-#         z = [y, *x]
-#         z = self.norm1(z)
-#         z = self.msa(z)
-#         z = self.norm2(z)
-#         z = self.mlp1(z)
-#         z = F.gelu(z)
-#         z = self.mlp2(z)
-#         z = F.gelu(z)
-#         z = self.norm3(z)
-#         return z[0]
 
 class ViT(torch.nn.Module):
     def __init__(self, P, N, D, H, MLP) -> None:
         super(ViT, self).__init__()
         self.D = D
         self.N = N
-        self.location_encoding = torch.Tensor(
-            [[i/(N + 1) for i in range(0, 17)]])
+        self.class_random = torch.normal(0, 1, size = (1, 1, D))
+        self.location_encoding = torch.tensor([[i for i in range(0,17)]], dtype=torch.int32)
+        self.position_embeddings = nn.Embedding(N  + 1, D)
         self.flatten = nn.Flatten(2)
         self.class_projection = nn.Linear(D, D)
         self.location_projection = nn.Linear(1, D)  # N + 1, D)
         self.patch_projection = nn.Linear(P*P, D)
-        self.MSA1 = nn.MultiheadAttention(D, H)
-        self.MLP1 = nn.Linear(D, D)
-        self.MSA2 = nn.MultiheadAttention(D, H)
-        self.MLP2 = nn.Linear(D, D)
         self.encoder1 = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(D, H, 2500, activation="gelu"),
-            num_layers=3
+            nn.TransformerEncoderLayer(D, H, 3000, activation="gelu"),
+            num_layers=4
         )
-        # self.encoder1 = nn.TransformerEncoder(
-        #     nn.TransformerEncoderLayer(
-        #         D, H, MLP, activation='gelu'
-        #     ),
-        #     num_layers=2
-        # )
         self.mlp1 = nn.Linear(self.D, 250)
         self.mlp2 = nn.Linear(250, 100)
         self.mlp3 = nn.Linear(100, 10)
         self.amax = torch.argmax
 
     def forward(self, x):
-        class_random = torch.normal(0, 1, size=(x.shape[0], 1, self.D))
-        patch_location_encoding = torch.cat(
-            [self.location_encoding]*x.shape[0]
-        ).unsqueeze(-1)
-        x_loc = self.location_projection(patch_location_encoding)
+        class_random = self.class_random.repeat(x.shape[0], 1, 1)
+        x_loc = self.position_embeddings(self.location_encoding)
         x = self.flatten(x)
         x_p = self.patch_projection(x)
         encoding = torch.cat([class_random, x_p], dim=1) + x_loc
         encoding = F.normalize(encoding)
         z = self.encoder1(encoding)
         head_code = z[:, 0]
-        # x = F.relu(head_code)
-        # x = self.mlp1(x)
-        # x = F.relu(x)
-        # x = self.mlp2(x)
-        # x = F.tanh(x)
-        # x = self.mlp3(x)
         x = self.mlp1(head_code)
         x = self.mlp2(x)
         x = F.tanh(x)
         x = self.mlp3(x)
         output = F.log_softmax(x, dim=1)
         return output
-
-        # z = F.layer_norm(encoding, normalized_shape=(
-        #     x.shape[0], self.N + 1, self.D))
-        # z = self.MSA1(z) + z
-        # z = F.layer_norm(z)
-        # print(z.shape)
-        # z = self.MLP1(z) + z
-        # z = F.layer_norm(z)
-        # z = self.MSA2(z) + z
-        # z = F.layer_norm(z)
-        # z = self.MLP2(z) + z
-        # self.amax(z)
 
 
 class CNN(torch.nn.Module):
@@ -286,13 +207,13 @@ def test(network, test_loader):
 
 # Training ViT
 train_loader, test_loader = load_data_ViT()
-n_epochs = 10
+n_epochs = 1
 train_losses = []
 train_counter = []
 test_losses = []
 test_counter = []
 # P, N, D, H, MLP
-network = ViT(7, 16, 360, 12, 10)
+network = ViT(7, 16, 500, 10, 10)
 optimizer = optim.SGD(network.parameters(), lr=learning_rate,
                       momentum=momentum)
 for epoch in range(1, n_epochs + 1):
