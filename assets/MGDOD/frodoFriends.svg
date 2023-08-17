@@ -1,0 +1,46 @@
+<?xml version="1.0" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="388pt" height="228pt" viewBox="0.00 0.00 387.81 228.29">
+<g id="graph0" class="graph" transform="translate(4,224.2899932861328) scale(1)" data-name="G">
+
+<polygon fill="white" stroke="none" points="-4,4 -4,-224.29 383.81,-224.29 383.81,4 -4,4"/>
+<!-- frodo -->
+<g id="node1" class="node" pointer-events="visible" data-name="frodo">
+
+<ellipse fill="none" stroke="rgb(255, 0, 0)" cx="148.56" cy="-18" rx="63.74" ry="18"/>
+<text text-anchor="middle" x="148.56" y="-13.8" font-family="Times,serif" font-size="14.00">USER#Frodo</text>
+</g>
+<!-- sam -->
+<g id="node2" class="node" pointer-events="visible" data-name="sam">
+
+<ellipse fill="none" stroke="rgb(255, 0, 0)" cx="148.56" cy="-202.29" rx="75.34" ry="18"/>
+<text text-anchor="middle" x="148.56" y="-198.09" font-family="Times,serif" font-size="14.00">USER#Samwise</text>
+</g>
+<!-- frodo&#45;&gt;sam -->
+<g id="edge1" class="edge" data-name="frodo-&gt;sam">
+
+<path fill="none" stroke="rgb(0, 128, 0)" d="M148.56,-36.34C148.56,-68.22 148.56,-134.09 148.56,-172.57"/>
+<polygon fill="Green" stroke="Green" points="145.06,-172.5 148.56,-182.5 152.06,-172.5 145.06,-172.5"/>
+<text text-anchor="middle" x="74.28" y="-108.65" font-family="Times,serif" font-size="14.00">FRIEND-USER#Samwise</text>
+</g>
+<!-- gandalf -->
+<g id="node3" class="node" pointer-events="visible" data-name="gandalf">
+
+<ellipse fill="none" stroke="rgb(255, 0, 0)" cx="308.15" cy="-110.14" rx="71.8" ry="18"/>
+<text text-anchor="middle" x="308.15" y="-105.94" font-family="Times,serif" font-size="14.00">USER#Gandalf</text>
+</g>
+<!-- frodo&#45;&gt;gandalf -->
+<g id="edge2" class="edge" data-name="frodo-&gt;gandalf">
+
+<path fill="none" stroke="rgb(0, 128, 0)" d="M177.09,-34.47C202.84,-49.34 240.93,-71.33 269.42,-87.78"/>
+<polygon fill="Green" stroke="Green" points="267.34,-90.62 277.75,-92.59 270.84,-84.56 267.34,-90.62"/>
+<text text-anchor="middle" x="293.3" y="-36.02" font-family="Times,serif" font-size="14.00">FRIEND-USER#Gandalf</text>
+</g>
+<!-- sam&#45;&gt;gandalf -->
+<g id="edge3" class="edge" data-name="sam-&gt;gandalf">
+
+<path fill="none" stroke="rgb(0, 128, 0)" d="M177.83,-185.39C203.48,-170.58 240.95,-148.94 269.14,-132.67"/>
+<polygon fill="Green" stroke="Green" points="270.85,-135.72 277.76,-127.69 267.35,-129.66 270.85,-135.72"/>
+<text text-anchor="middle" x="304.78" y="-153.38" font-family="Times,serif" font-size="14.00">FRIEND-USER#Gandalf</text>
+</g>
+</g>
+</svg>

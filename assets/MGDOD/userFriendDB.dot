@@ -1,0 +1,21 @@
+digraph G {
+    USER [xlabel=<
+    <table>
+       <tr><td>PartitionKey</td><td>USER</td></tr>
+       <tr><td>SortKey</td><td></td></tr>
+       <tr><td>username</td><td>ringBearer</td></tr>
+       <tr><td>firstName</td><td>Frodo</td></tr>
+       <tr><td>lastName</td><td>Baggins</td></tr>
+    </table>
+  >]
+  
+  n1 [shape=plaintext, label=""]
+  
+  USER -> n1 [label=<
+  <table>
+       <tr><td>PartitionKey</td><td>USER</td></tr>
+       <tr><td>SortKey</td><td>FRIEND</td></tr>
+       <tr><td>createdDate</td><td>2023-05-01</td></tr>
+  </table>
+  >]
+}

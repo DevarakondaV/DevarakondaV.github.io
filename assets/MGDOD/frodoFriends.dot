@@ -1,0 +1,9 @@
+digraph G {
+   frodo [label="USER#Frodo", color="red"]
+   sam [label="USER#Samwise",color="red"]
+   gandalf [label="USER#Gandalf",color="red"]
+   
+   frodo -> sam [label="FRIEND-USER#Samwise",labeldistance=17.5, color="Green"]
+   frodo -> gandalf [headlabel="FRIEND-USER#Gandalf",labeldistance=5.5, labelangle=75, color="Green"]
+   sam -> gandalf [headlabel="FRIEND-USER#Gandalf",labeldistance=4, labelangle=-100, color="Green"]
+}

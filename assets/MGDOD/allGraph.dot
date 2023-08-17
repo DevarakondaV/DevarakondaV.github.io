@@ -1,0 +1,17 @@
+digraph G {
+   frodo [label="USER#Frodo", color="red"]
+   sam [label="USER#Samwise", color="red"]
+   gandalf [label="USER#Gandalf", color="red"]
+   gondor [label="PLACE#Gondor", color="blue"]
+   TheShire [label="PLACE#TheShire", color="blue"]
+   
+   frodo -> sam [label="FRIEND-USER#Samwise", color="Green"]//,labeldistance=17.5 ]
+   frodo -> gandalf [headlabel="FRIEND-USER#Gandalf", color="Green"]//,labeldistance=5.5, labelangle=75]
+   sam -> gandalf [headlabel="FRIEND-USER#Gandalf", color="Green"]//,labeldistance=4, labelangle=-100]
+   frodo -> gondor [label="VISITED-PLACE#Gondor", color="Purple"]
+   frodo -> TheShire [label="VISITED-PLACE#TheShire",color="Purple"]
+   sam -> gondor [label="VISITED-PLACE#Gondor",color="Purple"]
+   sam -> TheShire [label="VISITED-PLACE#TheShire",color="Purple"]
+   gandalf -> gondor [label="VISITED-PLACE#Gondor",color="Purple"]
+   gandalf -> TheShire [label="VISITED-PLACE#TheShire",color="Purple"]
+}
