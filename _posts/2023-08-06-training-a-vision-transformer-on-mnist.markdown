@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "VIT and MNIST"
+title: "Training a Vision Transformer on MNIST"
 date: 2023-05-23
 categories: A.I
 ---
@@ -75,3 +75,8 @@ $$
 | $$LN_2^2$$ | LayerNorm | $$z_2^{LN22}=LN_2^2(z_2^{'})$$ |
 | $$MLP_2$$ | Multi layer perceptron | $$z_2=MSA(z_2^{LN22})+z_2^{LN22}$$|
 | $$LN_3$$ | LayerNorm | $$y=LN_3(z_2^0)$$ |
+
+
+# Ref
+
+1. [An Image is Worth 16X16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/pdf/2010.11929.pdf)

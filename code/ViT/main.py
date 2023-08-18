@@ -12,14 +12,16 @@ import numpy as np
 DATA_DIR = "/tmp/MNIST"
 BATCH_SIZE = 32
 
+
 class ViT(torch.nn.Module):
     def __init__(self, P, N, D, H, MLP) -> None:
         super(ViT, self).__init__()
         self.D = D
         self.N = N
-        self.class_random = torch.normal(0, 1, size = (1, 1, D))
-        self.location_encoding = torch.tensor([[i for i in range(0,17)]], dtype=torch.int32)
-        self.position_embeddings = nn.Embedding(N  + 1, D)
+        self.class_random = torch.normal(0, 1, size=(1, 1, D))
+        self.location_encoding = torch.tensor(
+            [[i for i in range(0, 17)]], dtype=torch.int32)
+        self.position_embeddings = nn.Embedding(N + 1, D)
         self.flatten = nn.Flatten(2)
         self.class_projection = nn.Linear(D, D)
         self.location_projection = nn.Linear(1, D)  # N + 1, D)
@@ -73,7 +75,6 @@ class CNN(torch.nn.Module):
         x = self.dropout2(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
-        print(output[0])
         return output
 
 
@@ -178,30 +179,30 @@ def test(network, test_loader):
 
 # Training CNN
 
-# train_loader, test_loader = load_data_cnn()
-# n_epochs = 1
-# train_losses = []
-# train_counter = []
-# test_losses = []
-# test_counter = []
-# network = CNN()
-# optimizer = optim.SGD(network.parameters(), lr=learning_rate,
-#                       momentum=momentum)
-# for epoch in range(1, n_epochs + 1):
-#     epoch_losses, epoch_counter = train(
-#         network, optimizer, train_loader, epoch)
-#     epoch_loss, epoch_count = test(network, test_loader)
-#     train_losses += epoch_losses
-#     train_counter += epoch_counter
-#     test_losses.append(epoch_loss)
-#     test_counter.append(epoch_count)
+train_loader, test_loader = load_data_cnn()
+n_epochs = 1
+train_losses = []
+train_counter = []
+test_losses = []
+test_counter = []
+network = CNN()
+optimizer = optim.SGD(network.parameters(), lr=learning_rate,
+                      momentum=momentum)
+for epoch in range(1, n_epochs + 1):
+    epoch_losses, epoch_counter = train(
+        network, optimizer, train_loader, epoch)
+    epoch_loss, epoch_count = test(network, test_loader)
+    train_losses += epoch_losses
+    train_counter += epoch_counter
+    test_losses.append(epoch_loss)
+    test_counter.append(epoch_count)
 
-# fig = plt.figure()
-# plt.plot(train_counter, train_losses, color='blue')
-# # plt.scatter(test_counter, test_losses, color='red')
+fig = plt.figure()
+plt.plot(train_counter, train_losses, color='blue')
+# plt.scatter(test_counter, test_losses, color='red')
 # plt.legend(['Train Loss', 'Test Loss'], loc='upper right')
-# plt.xlabel('number of training examples seen')
-# plt.ylabel('negative log likelihood loss')
+plt.xlabel('number of training examples seen')
+plt.ylabel('negative log likelihood loss')
 # fig.savefig("CNNLoss")
 
 
@@ -224,10 +225,11 @@ for epoch in range(1, n_epochs + 1):
     train_counter += epoch_counter
     test_losses.append(epoch_loss)
     test_counter.append(epoch_count)
-fig = plt.figure()
-plt.plot(train_counter, train_losses, color='blue')
+# fig = plt.figure()
+plt.plot(train_counter, train_losses, color='red')
 # plt.scatter(test_counter, test_losses, color='red')
-plt.legend(['Train Loss', 'Test Loss'], loc='upper right')
-plt.xlabel('number of training examples seen')
-plt.ylabel('negative log likelihood loss')
-fig.savefig("ViTLoss")
+# plt.legend(['Train Loss', 'Test Loss'], loc='upper right')
+plt.legend(['CNN Loss', 'ViT Loss'], loc='upper right')
+# plt.xlabel('number of training examples seen')
+# plt.ylabel('negative log likelihood loss')
+fig.savefig("loss")
