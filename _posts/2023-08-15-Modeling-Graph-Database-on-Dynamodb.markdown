@@ -8,7 +8,7 @@ categories: Software
 
 ## Introduction
 
-I'm recently been fascinated by graphs. They're a simple but powerful data structure to model data and relationships. It's well known that social media companies use graphs to model relationships like friends, followers, etc. In this article I explore graph data modeling by building a graph database on top of dynamodb. 
+I'm recently been fascinated by graphs. They're a simple but powerful data structure to model data and relationships. It's well known that social media companies use graphs to model relationships like friends, followers, etc. In this article I explore graph data modeling by building a graph database on top of DynamoDB. 
 
 # Preliminary
 
