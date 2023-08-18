@@ -66,9 +66,9 @@ This edge can be represented in dynamodb like below.
 | | | UNKNOWN |
 
 
-# Keys
+### Keys
 
-### Partition Key
+# Partition Key
 
 Let's now discuss the keys for this table. The real trick to transforming these items into a graph is in defining the keys correctly. The most important requirement in graph databases is the ability to query a node and query all the edges that exist on that node. This requirement can be met by defining the same partition key for a node and its edges. As a bonus, this places the nodes and their edges in the same partition in DynamoDB. Now, we can query a node and all its relations by simply querying the partition key. For our example, we can define a partition key as "USER" like shown below:
 
@@ -78,7 +78,7 @@ Let's now discuss the keys for this table. The real trick to transforming these 
 | USER | | ringBearer | Frodo | Baggins |
 | USER | | | | | UNKNOWN |
 
-### Sort Keys
+# Sort Keys
 
 Next, we need to define the sort keys. The DynamoDB sort keys determine the order of the data in the partition. Therefore, this key can be used to construct hierarchical keys to naturally sort the data (COUNTRY/STATE/CITY/etc.). This also provides an excellent way to group edges by edge type! If we have an edge type of "FRIEND", we can define it as the sort key for the edge.
 
