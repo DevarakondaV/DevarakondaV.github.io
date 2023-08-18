@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Modeling a Graph Database on DynamoDB."
+title: "Modeling a Graph Database on DynamoDB"
 date: 2023-08-15
 categories: Software
 ---
