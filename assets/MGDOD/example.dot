@@ -1,0 +1,4 @@
+digraph G {
+   userA -> userB [label="FRIEND"]
+   userA -> userC [label="FRIEND"]
+}

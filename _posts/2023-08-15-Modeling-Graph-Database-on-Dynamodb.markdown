@@ -15,7 +15,7 @@ I'm recently been fascinated by graphs. They're a simple but powerful data struc
 Graphs are made up of nodes and connections. In a graph database, objects can be represented as nodes, and the relationships between objects can be represented as connections. For example, in the diagram below, we define three user nodes (*userA*, *userB*, and *userC*) and a *FRIEND* connection between *userA* and *userB*.
 
 {:refdef: style="text-align: center;"}
-![yay](/assets/MGDOD/userFriend.png)
+![yay](/assets/MGDOD/example.svg)
 {: refdef}
 
 This structure allows us to answer questions like "Who are *UserA*'s friends?". In a hypothetical graph database, you can answer this question by finding *UserA* and simply retrieving all the *FRIEND* connections to find their friends. So, how do we model this on top of DynamoDB? It turns out to be quite straightforward.
