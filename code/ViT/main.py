@@ -23,8 +23,6 @@ class ViT(torch.nn.Module):
             [[i for i in range(0, 17)]], dtype=torch.int32)
         self.position_embeddings = nn.Embedding(N + 1, D)
         self.flatten = nn.Flatten(2)
-        self.class_projection = nn.Linear(D, D)
-        self.location_projection = nn.Linear(1, D)  # N + 1, D)
         self.patch_projection = nn.Linear(P*P, D)
         self.encoder1 = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(D, H, 3000, activation="gelu"),
