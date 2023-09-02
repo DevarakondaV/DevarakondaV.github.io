@@ -1,9 +1,15 @@
+# emacs
+\#*\#
+*~
+
 _site
 .sass-cache
 .jekyll-cache
 .jekyll-metadata
 vendor
 
+# C++
+*.o
 
 code/ViT/results/
 code/ViT/resultsCNN/
