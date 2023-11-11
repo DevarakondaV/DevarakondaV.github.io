@@ -1,7 +1,9 @@
 #include <iostream>
+#include <vector>
 #include <chrono>
+#include <thread>
 
-#define N 100000
+#define N 1000000
 
 using namespace std;
 using namespace std::chrono;
@@ -18,12 +20,24 @@ void dot_product(float vec1[N], float vec2[N], float & out){
   }
 }
 
+void dot_thread(float vec1[N], float vec2[N], float& out, int x){
+  out += vec1[x] * vec2[x];
+}
+
+// Parallelize
 void dot_product_op(float vec1[N], float vec2[N], float & out){
-  int B = 10;
+  int B = 5;
+  vector<thread> threads;
   for(int b = 0; b < N; b+=B){
+    int bb = 0;
     for(int i = b; i < b+B; ++i){
-      out += vec1[i] * vec2[i];
+      threads.push_back(thread(dot_thread, ref(vec1), ref(vec2), ref(out), i));
+      ++bb;
+      // out += vec1[i] * vec2[i];
     }
+  }
+  for(int i = 0; i < threads.size(); ++i){
+      threads[i].join();
   }
 }
 
@@ -54,7 +68,8 @@ int main(){
        << mean << " microseconds" << endl;
   for(int i = 0; i < run_times; i++){
     auto start = high_resolution_clock::now();
-    dot_product_op(vec1, vec2, out2);
+    dot_product(vec1, vec2, out1); // 88
+    dot_product_op(vec1, vec2, out2); // 21
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     durations[i] = duration.count();

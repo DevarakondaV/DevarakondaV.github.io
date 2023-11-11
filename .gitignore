@@ -8,3 +8,9 @@ vendor
 code/ViT/results/
 code/ViT/resultsCNN/
 code/ViT/ViTLoss.png
+
+
+# conv
+code/conv/*.txt
+code/conv/perf*
+code/conv/dot
