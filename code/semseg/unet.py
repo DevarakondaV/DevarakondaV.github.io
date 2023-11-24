@@ -12,7 +12,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 from torch import optim
 import torch.nn.functional as F
-
+from PIL import Image
 
 class AttentionUNet(torch.nn.Module):
     def __init__(self) -> None:
@@ -412,8 +412,9 @@ def update_masks():
         f"{out_mask_files_dir}/{file}" for file in os.listdir(out_mask_files_dir)]
     for file in files:
         img=cv2.imread(file, cv2.COLOR_BGR2GRAY)
-        img[img == 2]=255
-        img[img == 3]=0
+        img[img == 1] = 255
+        img[img == 2] = 0
+        img[img == 3] = 255
         cv2.imwrite(file, img)
 
 
@@ -422,26 +423,40 @@ class DogsDataset(torch.utils.data.Dataset):
         self.images_data_dir=images_data_dir
         self.masks_data_dir=masks_data_dir
         self.image_files=os.listdir(self.images_data_dir)
-        # self.resizeTransform = torchvision.transforms.Resize((388, 388))
-        self.resizeTransform=torchvision.transforms.Resize((256, 256))
 
     def __len__(self):
         return len(self.image_files)
+    
+    @staticmethod
+    def preprocess(pil_image, is_mask):
+        w, h = pil_image.size
+        # newW, newH = 256, 256
+        newW, newH = 150, 150
+        pil_image = pil_image.resize(
+            (newW, newH), resample=Image.NEAREST if is_mask else Image.BICUBIC
+        )
+        img = np.asarray(pil_image)
+        if is_mask:
+            return img / 255.0
+        else:
+            if img.ndim == 2:
+                img = img[np.newaxis, ...]
+            else:
+                img = img.transpose((2, 0, 1))
+            if (img > 1).any():
+                img = img / 255.0
+            return img
 
     def __getitem__(self, index):
         image_file=self.image_files[index]
         image_file_path=f"{self.images_data_dir}/{image_file}"
         mask_file_path=f"{self.masks_data_dir}/{image_file}"
-        image=cv2.imread(image_file_path)
-        mask=cv2.imread(mask_file_path, cv2.IMREAD_GRAYSCALE)
-        image=np.moveaxis(image, -1, 0)
-        mask=np.expand_dims(mask, 0)
+        image = Image.open(image_file_path)
+        mask = Image.open(mask_file_path)
+        image = self.preprocess(image, False)
+        mask = self.preprocess(mask, True)
         image=torch.from_numpy(image).type(torch.float32)
         mask=torch.from_numpy(mask).type(torch.float32)
-        image=self.resizeTransform(image)
-        mask=self.resizeTransform(mask)
-        image=image / 255.0
-        mask=mask / 255.0
         return {
             "image": image,
             "mask": mask
@@ -450,32 +465,14 @@ class DogsDataset(torch.utils.data.Dataset):
 def dice_loss(pred, mask):
     return 1 - dice_coefficient(pred, mask)
 
-def dice_coefficient(pred, mask):
+def dice_coefficient(pred, mask, reduce_batch_first=True):
     epsilon = 1E-6
-    SM = (-1, -2, -3)
+    SM = (-1, -2) if reduce_batch_first else (-1, -2, -3)
     num = 2 * ((pred * mask).sum(SM))
     den = pred.sum(SM) + mask.sum(SM)
     den = torch.where(den == 0, num, den)
     dice = (num + epsilon) / (den + epsilon)
     return dice.mean()
-
-# def train(model):
-#     BCE = torch.nn.BCEWithLogitsLoss()
-#     adam = torch.optim.Adam(model.parameters())
-#     for img, mask in train_loader:
-#         out = model(img)
-#         loss = BCE(out.squeeze(1), mask.squeeze())
-#         loss += dice_loss(F.sigmoid(out.squeeze(1)), mask.squeeze())
-
-#         adam.zero_grad(set_to_none=True)
-#         loss.backward()
-#         torch.nn.utils.clip_grad_norm_(
-#             model.parameters(), 1.0)
-#         adam.step()
-#         print("Loss: ", loss.item())
-        
-#     torch.save(model.state_dict(), 'results/model.pth')
-#     torch.save(adam.state_dict(), 'results/optimizer.pth')
 
 def train_unet():
     logging.basicConfig(level=logging.INFO,
@@ -485,7 +482,7 @@ def train_unet():
     CHECKPOINT_DIR = f"results/checkpoints"
     VAL_PERCENT = 0.2
     EPOCHS = 10
-    BATCH_SIZE = 4
+    BATCH_SIZE = 16
     LEARNING_RATE = 1E-3
     DEVICE = 'cpu'
     CHECKPOINT = "NEW"
@@ -507,6 +504,7 @@ def train_unet():
     val_loader = DataLoader(val_set, shuffle=False,
                             drop_last=True, **loader_args)
 
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'''Starting training:
         Epochs:          {EPOCHS}
         Batch size:      {BATCH_SIZE}
@@ -519,6 +517,7 @@ def train_unet():
     ''')
 
     model = UNet()
+    model.to(DEVICE)
     optimizer = optim.RMSprop(model.parameters(), lr=LEARNING_RATE)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, 'max', patience=5)
@@ -531,6 +530,8 @@ def train_unet():
         with tqdm(total=TRAINING_SIZE, desc=f'Epoch {epoch}/{EPOCHS}', unit='img') as pbar:
             for batch in train_loader:
                 images, true_masks = batch['image'], batch['mask']
+                images = images.to(DEVICE)
+                true_masks = true_masks.to(DEVICE)
                 masks_pred = model(images)
                 loss = loss_fn(masks_pred.squeeze(1), true_masks.squeeze(1).float())
                 loss += dice_loss(F.sigmoid(masks_pred.squeeze(1)),
@@ -557,6 +558,8 @@ def train_unet():
 
                         for batch in tqdm(val_loader, total=num_val_batches, desc='Validation round', unit='batch', leave=False):
                             image, mask_true = batch['image'], batch['mask']
+                            image = image.to(DEVICE)
+                            mask_true = mask_true.to(DEVICE)
                             # predict the mask
                             mask_pred = model(image)
                             mask_pred = (F.sigmoid(mask_pred) > 0.5).float()
@@ -579,11 +582,42 @@ def train_unet():
     return
 
 
-def pred(model_file, img):
+def pred(model_file, images_data_dir, masks_data_dir):
+    images_data_dir=images_data_dir
+    masks_data_dir=masks_data_dir
+    image_files=os.listdir(images_data_dir)
+    image_file=image_files[34]
+    image_file_path=f"{images_data_dir}/{image_file}"
+    mask_file_path=f"{masks_data_dir}/{image_file}"
+    image = Image.open(image_file_path)
+    mask = Image.open(mask_file_path)
+    image = DogsDataset.preprocess(image, False)
+    mask = DogsDataset.preprocess(mask, True)
+    img = torch.from_numpy(image).type(torch.float32)
+    mask = torch.from_numpy(mask).type(torch.float32)
+    img = torch.unsqueeze(img, 0)
+
+    img = (255.0*img[0]).type(torch.uint8)
+    img = img.numpy()
+    img = np.moveaxis(img, 0, -1)
+
+    mask = (255.0*mask).type(torch.uint8)
+    mask = mask.numpy()
+    mask = np.moveaxis(mask, 0, -1)
+    
+    cv2.imwrite("test/img.jpg", img)
+    cv2.imwrite("test/pred.jpg", mask)
+    return
+    
+    img = torch.from_numpy(image).type(torch.float32)
+    img = torch.unsqueeze(img, 0)
+    # mask=torch.from_numpy(mask).type(torch.float32)
+
     model = UNet()
     model.load_state_dict(torch.load(model_file))
     model.eval()
     out = model(img)
+
     img = (255.0*img[0]).type(torch.uint8)
     img = img.numpy()
     img = np.moveaxis(img, 0, -1)
@@ -596,4 +630,10 @@ def pred(model_file, img):
     cv2.imwrite("test/pred.jpg", out)
 
 if __name__ == "__main__":
+    # gen_dogs()
+    # update_masks()
     train_unet()
+    
+    # DATA_IMG_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsImages"
+    # DATA_MASK_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
+    # pred("results/checkpoints/checkpoint_epoch1.pth", DATA_IMG_DIR, DATA_MASK_DIR)
