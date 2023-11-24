@@ -586,7 +586,7 @@ def pred(model_file, images_data_dir, masks_data_dir):
     images_data_dir=images_data_dir
     masks_data_dir=masks_data_dir
     image_files=os.listdir(images_data_dir)
-    image_file=image_files[34]
+    image_file=image_files[45]
     image_file_path=f"{images_data_dir}/{image_file}"
     mask_file_path=f"{masks_data_dir}/{image_file}"
     image = Image.open(image_file_path)
@@ -594,20 +594,20 @@ def pred(model_file, images_data_dir, masks_data_dir):
     image = DogsDataset.preprocess(image, False)
     mask = DogsDataset.preprocess(mask, True)
     img = torch.from_numpy(image).type(torch.float32)
-    mask = torch.from_numpy(mask).type(torch.float32)
-    img = torch.unsqueeze(img, 0)
+    # mask = torch.from_numpy(mask).type(torch.float32)
+    # img = torch.unsqueeze(img, 0)
 
-    img = (255.0*img[0]).type(torch.uint8)
-    img = img.numpy()
-    img = np.moveaxis(img, 0, -1)
+    # img = (255.0*img[0]).type(torch.uint8)
+    # img = img.numpy()
+    # img = np.moveaxis(img, 0, -1)
 
-    mask = (255.0*mask).type(torch.uint8)
-    mask = mask.numpy()
-    mask = np.moveaxis(mask, 0, -1)
+    # mask = (255.0*mask).type(torch.uint8)
+    # mask = mask.numpy()
+    # mask = np.moveaxis(mask, 0, -1)
     
-    cv2.imwrite("test/img.jpg", img)
-    cv2.imwrite("test/pred.jpg", mask)
-    return
+    # cv2.imwrite("test/img.jpg", img)
+    # cv2.imwrite("test/pred.jpg", mask)
+    # return
     
     img = torch.from_numpy(image).type(torch.float32)
     img = torch.unsqueeze(img, 0)
@@ -632,8 +632,8 @@ def pred(model_file, images_data_dir, masks_data_dir):
 if __name__ == "__main__":
     # gen_dogs()
     # update_masks()
-    train_unet()
+    # train_unet()
     
-    # DATA_IMG_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsImages"
-    # DATA_MASK_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
-    # pred("results/checkpoints/checkpoint_epoch1.pth", DATA_IMG_DIR, DATA_MASK_DIR)
+    DATA_IMG_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsImages"
+    DATA_MASK_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
+    pred("results/checkpoints/checkpoint_epoch2.pth", DATA_IMG_DIR, DATA_MASK_DIR)
