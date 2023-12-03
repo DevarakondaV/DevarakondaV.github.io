@@ -14,176 +14,6 @@ from torch import optim
 import torch.nn.functional as F
 from PIL import Image
 
-class AttentionUNet(torch.nn.Module):
-    def __init__(self) -> None:
-        super(AttentionUNet, self).__init__()
-        self.print_shapes = False
-        self.conv1 = torch.nn.Conv2d(3, 64, 3)
-        self.relu1 = torch.nn.ReLU()
-        self.conv2 = torch.nn.Conv2d(64, 64, 3)
-        self.relu2 = torch.nn.ReLU()
-        self.mp1 = torch.nn.MaxPool2d(2, 2)
-
-        self.conv3 = torch.nn.Conv2d(64, 128, 3)
-        self.relu3 = torch.nn.ReLU()
-        self.conv4 = torch.nn.Conv2d(128, 128, 3)
-        self.relu4 = torch.nn.ReLU()
-        self.mp2 = torch.nn.MaxPool2d(2, 2)
-
-        self.conv5 = torch.nn.Conv2d(128, 256, 3)
-        self.relu5 = torch.nn.ReLU()
-        self.conv6 = torch.nn.Conv2d(256, 256, 3)
-        self.relu6 = torch.nn.ReLU()
-        self.mp3 = torch.nn.MaxPool2d(2, 2)
-
-        self.conv7 = torch.nn.Conv2d(256, 512, 3)
-        self.relu7 = torch.nn.ReLU()
-        self.conv8 = torch.nn.Conv2d(512, 512, 3)
-        self.relu8 = torch.nn.ReLU()
-        self.mp4 = torch.nn.MaxPool2d(2, 2)
-
-        self.conv9 = torch.nn.Conv2d(512, 512, 3)
-        self.relu9 = torch.nn.ReLU()
-        self.conv10 = torch.nn.Conv2d(512, 512, 3)
-        self.relu10 = torch.nn.ReLU()
-
-        self.upConv1 = torch.nn.ConvTranspose2d(512, 512, 2, 2)
-        self.conv11 = torch.nn.Conv2d(1024, 512, 3)
-        self.relu11 = torch.nn.ReLU()
-        self.conv12 = torch.nn.Conv2d(512, 256, 3)
-        self.relu12 = torch.nn.ReLU()
-
-        self.upConv2 = torch.nn.ConvTranspose2d(256, 256, 2, 2)
-        self.conv13 = torch.nn.Conv2d(512, 256, 3)
-        self.relu13 = torch.nn.ReLU()
-        self.conv14 = torch.nn.Conv2d(256, 128, 3)
-        self.relu14 = torch.nn.ReLU()
-
-        self.upConv3 = torch.nn.ConvTranspose2d(128, 128, 2, 2)
-        self.conv15 = torch.nn.Conv2d(256, 198, 3)
-        self.relu15 = torch.nn.ReLU()
-        self.conv16 = torch.nn.Conv2d(198, 64, 3)
-        self.relu16 = torch.nn.ReLU()
-
-        self.upConv4 = torch.nn.ConvTranspose2d(64, 64, 2, 2)
-        self.conv17 = torch.nn.Conv2d(128, 64, 3)
-        self.relu17 = torch.nn.ReLU()
-        self.conv18 = torch.nn.Conv2d(64, 64, 3)
-        self.relu18 = torch.nn.ReLU()
-
-        self.conv19 = torch.nn.Conv2d(64, 1, 1)
-
-    def forward(self, x):
-
-        # Block1
-        x = self.relu1(self.conv1(x))
-        out1 = self.relu2(self.conv2(x))
-        x = self.mp1(out1)
-
-        if self.print_shapes:
-            print("M1: ", x.shape)
-
-        # Block2
-        x = self.relu3(self.conv3(x))
-        out2 = self.relu4(self.conv4(x))
-        x = self.mp2(out2)
-
-        if self.print_shapes:
-            print("M2: ", x.shape)
-
-        # Block3
-        x = self.relu5(self.conv5(x))
-        out3 = self.relu6(self.conv6(x))
-        x = self.mp3(out3)
-
-        if self.print_shapes:
-            print("M3: ", x.shape)
-
-        # Block4
-        x = self.relu7(self.conv7(x))
-        out4 = self.relu8(self.conv8(x))
-        x = self.mp4(out4)
-
-        if self.print_shapes:
-            print("M4: ", x.shape)
-
-        x = self.relu9(self.conv9(x))
-        out5 = self.relu10(self.conv10(x))
-
-        if self.print_shapes:
-            print("Last: ", out5.shape)
-
-        x = self.upConv1(out5)
-        x = F.pad(x, (
-            int((out4.shape[2]-x.shape[2])/2),
-            int((out4.shape[2]-x.shape[2])/2),
-            int((out4.shape[3]-x.shape[3])/2),
-            int((out4.shape[3]-x.shape[3])/2)
-            ), 'constant', 0)
-        # out4Crop = self.crop(out4, 56, 56)
-        # x = torch.concat([out4Crop, x], axis=1)
-        x=torch.concat([out4, x], axis=1)
-        x=self.relu11(self.conv11(x))
-        x=self.relu12(self.conv12(x))
-
-        if self.print_shapes:
-            print("PUC1: ", x.shape)
-
-        x=self.upConv2(x)
-        x = F.pad(x, (
-            int((out3.shape[2]-x.shape[2])/2) + 1,
-            int((out3.shape[2]-x.shape[2])/2),
-            int((out3.shape[3]-x.shape[3])/2) + 1,
-            int((out3.shape[3]-x.shape[3])/2)
-            ), 'constant', 0)
-        # out3Crop = self.crop(out3, 104, 104)
-        # x = torch.concat([out3Crop, x], axis=1)
-        x=torch.concat([out3, x], axis=1)
-        x=self.relu13(self.conv13(x))
-        x=self.relu14(self.conv14(x))
-
-        if self.print_shapes:
-            print("PUC2: ", x.shape)
-
-        x=self.upConv3(x)
-        x = F.pad(x, (
-            int((out2.shape[2]-x.shape[2])/2),
-            int((out2.shape[2]-x.shape[2])/2),
-            int((out2.shape[3]-x.shape[3])/2),
-            int((out2.shape[3]-x.shape[3])/2)
-            ), 'constant', 0)
-        # out2Crop = self.crop(out2, 200, 200)
-        # x = torch.concat([out2Crop, x], axis=1)
-        x=torch.concat([out2, x], axis=1)
-        x=self.relu15(self.conv15(x))
-        x=self.relu16(self.conv16(x))
-
-        if self.print_shapes:
-            print("PU3: ", x.shape)
-
-        x=self.upConv4(x)
-        x = F.pad(x, (
-            int((out1.shape[2]-x.shape[2])/2),
-            int((out1.shape[2]-x.shape[2])/2),
-            int((out1.shape[3]-x.shape[3])/2),
-            int((out1.shape[3]-x.shape[3])/2)
-            ), 'constant', 0)
-        # out1Crop = self.crop(out1, 392, 392)
-        # x = torch.concat([out1Crop, x], axis=1)
-        x = torch.concat([out1, x], axis=1)
-        x=self.relu17(self.conv17(x))
-        x=self.relu18(self.conv18(x))
-
-        x = F.pad(x, (
-            4,4,4,4
-            ), 'constant', 0)
-        out = self.conv19(x)
-
-        if self.print_shapes:
-            print("out: ", out.shape)
-        return out
-
-
 class UNet(torch.nn.Module):
     def __init__(self) -> None:
         """
@@ -379,7 +209,8 @@ class UNet(torch.nn.Module):
 
 
 def resize_images():
-    DATA_DIR="/home/vishnu/Documents/EngProjs/Dataset"
+    DIR = os.environ['WORKSPACE_DIR']
+    DATA_DIR=f"{DIR}/Dataset"
     data=np.load(f"{DATA_DIR}/MNIST_large500.npy")
     output=f"{DATA_DIR}/MNIST500/Images"
     factor=388/500
@@ -389,11 +220,12 @@ def resize_images():
 
 
 def gen_dogs():
-    lists_file="/home/vishnu/Documents/EngProjs/Dataset/pets/Allannotations/list.txt"
-    img_files_dir="/home/vishnu/Documents/EngProjs/Dataset/pets/Allimages"
-    mask_files_dir="/home/vishnu/Documents/EngProjs/Dataset/pets/Allannotations/trimaps"
-    out_img_files_dir="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsImages"
-    out_mask_files_dir="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
+    DIR = os.environ['WORKSPACE_DIR']
+    lists_file=f"{DIR}/Dataset/pets/Allannotations/list.txt"
+    img_files_dir=f"{DIR}/Dataset/pets/Allimages"
+    mask_files_dir=f"{DIR}/Dataset/pets/Allannotations/trimaps"
+    out_img_files_dir=f"{DIR}/Dataset/pets/dogsImages"
+    out_mask_files_dir=f"{DIR}/Dataset/pets/dogsMasks"
     with open(lists_file, 'r') as f:
         lines=[line for line in f.readlines()]
     lines=lines[6:]
@@ -407,7 +239,8 @@ def gen_dogs():
 
 
 def update_masks():
-    out_mask_files_dir="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
+    DIR = os.environ['WORKSPACE_DIR']
+    out_mask_files_dir=f"{DIR}/Dataset/pets/dogsMasks"
     files=[
         f"{out_mask_files_dir}/{file}" for file in os.listdir(out_mask_files_dir)]
     for file in files:
@@ -475,10 +308,11 @@ def dice_coefficient(pred, mask, reduce_batch_first=True):
     return dice.mean()
 
 def train_unet():
+    DIR = os.environ['WORKSPACE_DIR']
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)s: %(message)s')
-    DATA_IMG_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsImages"
-    DATA_MASK_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
+    DATA_IMG_DIR=f"{DIR}/Dataset/pets/dogsImages"
+    DATA_MASK_DIR=f"{DIR}/Dataset/pets/dogsMasks"
     CHECKPOINT_DIR = f"results/checkpoints"
     VAL_PERCENT = 0.2
     EPOCHS = 10
@@ -586,12 +420,14 @@ def pred(model_file, images_data_dir, masks_data_dir):
     images_data_dir=images_data_dir
     masks_data_dir=masks_data_dir
     image_files=os.listdir(images_data_dir)
-    image_file=image_files[45]
+    # image_file=image_files[45]
+    image_file = "staffordshire_bull_terrier_8.jpg"
+    print(image_file)
     image_file_path=f"{images_data_dir}/{image_file}"
     mask_file_path=f"{masks_data_dir}/{image_file}"
-    image = Image.open(image_file_path)
+    input_image = Image.open(image_file_path)
     mask = Image.open(mask_file_path)
-    image = DogsDataset.preprocess(image, False)
+    image = DogsDataset.preprocess(input_image, False)
     mask = DogsDataset.preprocess(mask, True)
     img = torch.from_numpy(image).type(torch.float32)
     # mask = torch.from_numpy(mask).type(torch.float32)
@@ -626,14 +462,70 @@ def pred(model_file, images_data_dir, masks_data_dir):
     out = (255.0*out[0]).type(torch.uint8)
     out = out.numpy()
     out = np.moveaxis(out, 0, -1)
-    cv2.imwrite("test/img.jpg", img)
-    cv2.imwrite("test/pred.jpg", out)
+    out = cv2.resize(out, (input_image.size[0], input_image.size[1]), 
+               interpolation = cv2.INTER_CUBIC)
+    cv2.imwrite(f"test/img_{image_file}.jpg", img)
+    input_image.save(f"test/oimg_{image_file}.jpg")
+    # cv2.imwrite(, input_image.)
+    cv2.imwrite(f"test/pred_{image_file}.jpg", out)
+
+def generate_display_image(DATA_IMG_DIR, DATA_MASK_DIR):
+    img_file1 = cv2.imread(f"{DATA_IMG_DIR}/american_bulldog_16.jpg")
+    img_file2 = cv2.imread(f"{DATA_IMG_DIR}/american_bulldog_40.jpg")
+    img_file3 = cv2.imread(f"{DATA_IMG_DIR}/american_bulldog_43.jpg")
+    img_file4 = cv2.imread(f"{DATA_IMG_DIR}/yorkshire_terrier_13.jpg")
+    img_file5 = cv2.imread(f"{DATA_IMG_DIR}/staffordshire_bull_terrier_8.jpg")
+    mask_file1 = cv2.imread(f"{DATA_MASK_DIR}/american_bulldog_16.jpg")
+    mask_file2 = cv2.imread(f"{DATA_MASK_DIR}/american_bulldog_40.jpg")
+    mask_file3 = cv2.imread(f"{DATA_MASK_DIR}/american_bulldog_43.jpg")
+    mask_file4 = cv2.imread(f"{DATA_MASK_DIR}/yorkshire_terrier_13.jpg")
+    mask_file5 = cv2.imread(f"{DATA_MASK_DIR}/staffordshire_bull_terrier_8.jpg")
+    pred_mask_file1 = cv2.imread(f"test/pred_american_bulldog_16.jpg.jpg")
+    pred_mask_file2 = cv2.imread(f"test/pred_american_bulldog_40.jpg.jpg")
+    pred_mask_file3 = cv2.imread(f"test/pred_american_bulldog_43.jpg.jpg")
+    pred_mask_file4 = cv2.imread(f"test/pred_yorkshire_terrier_13.jpg.jpg")
+    pred_mask_file5 = cv2.imread(f"test/pred_staffordshire_bull_terrier_8.jpg.jpg")
+
+    print(img_file1.shape, mask_file1.shape, pred_mask_file1.shape)
+    img = np.concatenate([
+        np.concatenate([img_file1, mask_file1, pred_mask_file1], axis=1),
+        np.concatenate([img_file2, mask_file2, pred_mask_file2], axis=1),
+        np.concatenate([img_file3, mask_file3, pred_mask_file3], axis=1),
+        np.concatenate([img_file4, mask_file4, pred_mask_file4], axis=1),
+        np.concatenate([img_file5, mask_file5, pred_mask_file5], axis=1),
+    ])
+    img = cv2.resize(img, (0,0), fx=0.33, fy=0.33)
+    cv2.imwrite("test/groupimg.jpg", img)
+
+def generate_figure1_image(DATA_IMG_DIR, DATA_MASK_DIR):
+    img_file1 = cv2.imread(f"{DATA_IMG_DIR}/american_bulldog_16.jpg")
+    img_file2 = cv2.imread(f"{DATA_IMG_DIR}/basset_hound_3.jpg")
+    # img_file3 = cv2.imread(f"{DATA_IMG_DIR}/american_bulldog_43.jpg")
+    mask_file1 = cv2.imread(f"{DATA_MASK_DIR}/american_bulldog_16.jpg")
+    mask_file2 = cv2.imread(f"{DATA_MASK_DIR}/basset_hound_3.jpg")
+    # mask_file3 = cv2.imread(f"{DATA_MASK_DIR}/american_bulldog_43.jpg")
+    # pred_mask_file1 = cv2.imread(f"test/pred_american_bulldog_16.jpg.jpg")
+    # pred_mask_file2 = cv2.imread(f"test/pred_american_bulldog_40.jpg.jpg")
+    # pred_mask_file3 = cv2.imread(f"test/pred_american_bulldog_43.jpg.jpg")
+
+    img = np.concatenate([
+        np.concatenate([img_file1, mask_file1], axis=1),
+        np.concatenate([img_file2, mask_file2], axis=1),
+        # np.concatenate([img_file3, mask_file3, pred_mask_file3], axis=1),
+    ])
+    img = cv2.resize(img, (0,0), fx=0.5, fy=0.5)
+    cv2.imwrite("test/figure1.jpg", img)
+
+    
 
 if __name__ == "__main__":
     # gen_dogs()
     # update_masks()
     # train_unet()
     
-    DATA_IMG_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsImages"
-    DATA_MASK_DIR="/home/vishnu/Documents/EngProjs/Dataset/pets/dogsMasks"
-    pred("results/checkpoints/checkpoint_epoch2.pth", DATA_IMG_DIR, DATA_MASK_DIR)
+    DIR = os.environ['WORKSPACE_DIR']
+    DATA_IMG_DIR=f"{DIR}/Dataset/pets/dogsImages"
+    DATA_MASK_DIR=f"{DIR}/Dataset/pets/dogsMasks"
+    # pred("results_1/checkpoint_epoch2.pth", DATA_IMG_DIR, DATA_MASK_DIR)
+    generate_display_image(DATA_IMG_DIR, DATA_MASK_DIR)
+    generate_figure1_image(DATA_IMG_DIR, DATA_MASK_DIR)
