@@ -2,6 +2,8 @@
 \#*\#
 *~
 
+*__pycache__*
+
 _site
 .sass-cache
 .jekyll-cache
@@ -14,3 +16,6 @@ vendor
 code/ViT/results/
 code/ViT/resultsCNN/
 code/ViT/ViTLoss.png
+
+code/semseg/test/
+code/semseg/results*
