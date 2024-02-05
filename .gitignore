@@ -19,3 +19,5 @@ code/ViT/ViTLoss.png
 
 code/semseg/test/
 code/semseg/results*
+code/tmp/
+code/results/
