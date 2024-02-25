@@ -21,3 +21,7 @@ code/semseg/test/
 code/semseg/results*
 code/tmp/
 code/results/
+code/results*/
+
+
+*.zip
