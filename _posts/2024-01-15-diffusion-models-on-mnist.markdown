@@ -83,3 +83,30 @@ $$
 & \leq \mathbb{E}_q[-\log{p(X_T)} - \sum_{t\geq1} \log{\frac{p_{\theta}(x_{t-1}|x_{t})}{q(x_t|x_{t-1})}}] := L
 \end{align*}
 $$
+
+
+## Training
+
+During training the following values are set
+
+### Forward Process
+
+- T = 1000
+- Forward process variances are constants increasing linearly from $$\beta_1 = 10^{-4} \rightarrow \beta_T = 0.02$$
+- Data scaled to [-1, 1]
+
+### Reverse process
+
+- UNet backbone
+    - Weight normalization replaced with group normalization
+    - 32x32 use 4 feature map resolutions
+    - 2 convolutional residual blocks per resolution level, self attention at 16x16 resolutoin between the convolution blocks.
+- Parameters are shared across time, which is specified to the network using the transformer sinusodial position embedding. Used as an embedding to represent the timestamp
+- Self-Attention 16x16 feature map resolution.
+- CIFAR 10 should have 35.7 million params
+- CIFAR 10 dropout is 0.1
+- CIFAR random horizontal flips
+- learning rate 2E-4
+- EMA on model params with decay factor 0.9999
+- $$\sigma$$ is either $$\beta_t$$ or $$\frac{1-\bar{\alpha_t}-1}{1-\bar{\alpha_t}}\beta_t$$
+
