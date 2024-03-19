@@ -7,6 +7,14 @@ categories: AI
 
 # Introduction
 
+{:refdef: style="text-align: center;"}
+![yay](/assets/DINO/attns.png)
+{: refdef}
+
+{:refdef: style="text-align: center;"}
+![yay](/assets/DINO/9.png)
+![yay](/assets/DINO/9_attn.jpg)
+{: refdef}
 
 Knowledge distilliation with no labels (DINO) is a method of self-supervised learning.
 
@@ -35,7 +43,7 @@ $$
 min_{\theta_s} H(P_{t}(x), P_s(x))
 $$
 
-# Self Supervised Learning
+# Self-Supervised Learning
 
 We adapt the above paradigm to self supervised learning.
 
@@ -53,12 +61,17 @@ DINO Standard
 - Several local views of resolution: 96x96. Small < 50% area of the original image.
 
 
-The Teacher network is built from past iterations of the student.
+The Teacher network is built from past iterations of the student. The weights from the student are used to update the teacher. Lets take a moment to really understand what is happening in this step. we are walking the distribution towards a  & further refining it every time.
 
 Freezing the teacher network over an epoch works pretty good while copying the student weight for the teacher fails to converge.
 
 
-### Network Architecture
+## Network Architecture
+
+{:refdef: style="text-align: center;"}
+![yay](/assets/DINO/model_architecture.png)
+{: refdef}
+
 
 The backbone is either ViT or ResNet. In this article, we use ResNet and a projection head $h: g = h\;o\;f$
 
@@ -67,9 +80,34 @@ Model collapse is avoided by centering and sharpening of the momentum teacher ou
 
 An extra learnable token $[CLS]$ is added to the sequence of embedding outputs of the initial linear layer. The Projection head $h$ is attached at it's output.
 
+## Training
+
+- Backbone: ViT
+- 2 Global views of resolution 24x24 resized to 28x28
+- 5 Random local views of resolution 12x12 resized to 28x28
+- Adam optimizer for training
+- ViT params
+    - Dimension 300
+    - Number of attention blocks: 10
+    - 2
+- Learning Rate
+    - Cosine Scheduler
+- Weight Decay
+    - Cosine Scheduler
+- Momentum
+    - Cosine Scheduler
+
+## Results
+
+## Thoughts & Conclusion
+
+
+- One of the things I found curious is how difficult it was to train this this model. The code was relatively simple to implement but the model is quite unstable. It was difficult to get any real results until I followed the exact parameter scheduling described in the paper.
+- This result in the attention maps is genuinely fascinating. There is no requirement imposed on the model during training. There are no labels provided to the model for training. Yet, the model learns to segment the regions of interest in the image that map on to the pixels that represent the digit. This kind of emergent behaviour is unexpected in and opens up a c the power of the transformer architecture.
 
 # Ref
 
 Some of the articles on my page are based on summaries of research papers. All credit goes to the original authors of the paper!
 
 1. 
+2. [Facebook Dino](https://github.com/facebookresearch/dino). I used some code as a reference.
