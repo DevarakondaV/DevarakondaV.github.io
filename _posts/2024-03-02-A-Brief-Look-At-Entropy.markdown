@@ -1,71 +1,91 @@
 ---
 layout: post
-title: "A brief look at Entropy"
+title: "A Brief Look at Entropy"
 date: 2024-03-02
 categories: AI
 ---
 
 # Introduction
 
-Lets take a breif look at entropy and it's relevance in machine learning models. Entropy frequently appears within machine learning because the concept is utilized to trained machine learning models. For example, cross entropy is one of the most common loss function in machine learning. 
+Lets take a brief look at entropy and its relevance in machine learning models. Entropy frequently appears in machine learning because it provides a foundation for training models to approximate probability distributions. For example, cross entropy loss is one of the most common loss function used for training classification models. 
 
 ## Entropy
 
-Entropy in the context of information theory was introduced by Claude Shannon when he was a graduate student (Insane!). Shannon defined entropy as the inherent uncertainty of a variable's possible state. Mathematically entropy of a given variable $x$ is defined like below.
+Entropy, in the context of information theory, was introduced by Claude Shannon when he was a graduate student. Shannon defined entropy as the inherent uncertainty of a variable's possible state. Mathematically, the entropy of a given variable $x$ is defined below.
 
 $$
-h(x) = - \int p(x)log(p(x))
+h(x) = \sum_{x \in \mathcal{X}} p(x)\log{p(x)}
 $$
 
-Suppose a variable $x$ can only exist in 1 possible state. Then using the above equation the entropy is calculated like below.
+Suppose a variable $x$ can only exist in one state. Then using the above equation, the entropy is calculated like below.
 
 $$
-h(x) = -p(x)log(p(x)) \\
-h(x) = -1 log 1 = 0
+\begin{align*}
+& h(x) = -p(x)\log{p(x)} \\
+& h(x) = -1 \log{1} = 0
+\end{align*}
 $$
 
-Intuitively this makes sense. A variable that can only exist in one state then the uncertaintiy in the possible state of the variable must be zero. Things get more interesting when you add more states. For example, a variable than can exist in two states with equal probability of either state has the following entropy.
+Intuitively this makes sense. A variable that can only exist in one state has no uncertainty so the entropy/uncertainty in it's possible state must be zero. Things get interesting when you add more states. For example, a variable than can exist in two states with equal probability of either state has the following entropy.
 
 $$
-h(x) = - [\frac{1}{2}\log(\frac{1}{2}) + \frac{1}{2}\log(\frac{1}{2})] \\
-h(x) = - [\frac{1}{2}(-1) + \frac{1}{2}(-1)]\\
-h(x) = - [-\frac{1}{2} - \frac{1}{2}]\\
-h(x) = - [-1] = 1
+\begin{align*}
+& h(x) = - \sum_{x \in \mathcal{X}}p(x) \log{p(x)} \\
+& h(x) = - [\frac{1}{2}\log{\frac{1}{2}} + \frac{1}{2}\log{\frac{1}{2}}] \\
+& h(x) = - [-\frac{1}{2} - \frac{1}{2}]\\
+& h(x) = - [-1] = 1
+\end{align*}
 $$
 
-Hence, the entropy and inherent uncertaintity of this variable is 1. It is not immediately clear why this is true. The connection might be clearer if you're familiar with bits and binary numbers! A single bit of information can be used to represent two possible states. Thus, any variable that can exist in two possible states of equal probability requires at most a single bit of informationto fully define. Hence, the uncertainty of the variable is 1.
+Unlike before, it is not immediately clear why this is true. The connection is more clear when thinking in terms of bits and binary numbers. A single bit of information can be used to represent two possible states. Thus, any variable that can exist in two possible states of equal probability requires at most a single bit of information to fully describe. Hence, the uncertainty of the variable is one.
 
-Needless to says, variables can be far more complex and in most cases, some states can be more probable than others. An unfair coin toss for example. In such a senario where heads has a probability of 25%, the entropy of the variable is defined like below.
-
-$$
-h(x) = - [Heads + Tails] \\
-h(x) = - [\frac{1}{4}\log(\frac{1}{4}) + \frac{3}{4}\log(\frac{3}{4})] \\
-h(x) = - [\frac{1}{4}(-2) + \frac{3}{4}(-0.415)]\\
-h(x) = - [-0.5 - 0.311]\\
-h(x) = - [-0.811] = 0.811
-$$
-
-The most interesting thing about this result is that it's less than when the possible states are uniformly distributed. Intuitively this also makes sense. A non-uniform distribution implies some states are more likely than others and thereofre, the uncertainty (entropy) of the variable must be smaller! Let's now take a look at how entropy is used in machine learning.
-
-### Usage in Machine Learning
-
-Entropy in machine learning is encountered where Cross Entropy is often used as a loss functions for classification tasks. For classification tasks, the goal is to train a model to map an input x to some probability for n-classes. In essence, the model is emulating a probability distribution, p(x), over the variables x. So how do we learn this distribution? If we assume that all of the n-classes are possible states that the variable x can exists in, it logically follows from the discussion above that the best distribution p(x) must be the distirbution with minimum entropy/uncertainity. In order to find the distribution p(x) we use the cross entropy loss function. The mathematical definition of cross entropy is given below.
+Unsurprisingly, variables can be far more complex and in most cases, some states can be more probable than others. For example, an unfair coin toss can be represented as a variable with two states with different probabilities. Suppose for instance that the probability of heads is 25%. Then the entropy of the variable is defined like below.
 
 $$
-H(p, x) = - \sum_{x \in \mathcal{x}} p(x) log q(x)
+\begin{align*}
+& h(x) = - \sum_{x \in [Heads,\; Tails]}p(x) \log{p(x)} \\
+& h(x) = - [Heads + Tails] \\
+& h(x) = - [\frac{1}{4}\log(\frac{1}{4}) + \frac{3}{4}\log(\frac{3}{4})] \\
+& h(x) = - [\frac{1}{4}(-2) + \frac{3}{4}(-0.415)]\\
+& h(x) = - [-0.5 - 0.311]\\
+& h(x) = - [-0.811] = 0.811
+\end{align*}
 $$
 
+An interesting thing about this result is that it's less than if the possible states are uniformly distributed. A non-uniform distribution implies some states are more likely than others and therefore the inherent uncertainty of the variable must be smaller! Let's now take a look at how entropy is used in machine learning.
 
-The cross entropy is comparing two different distributions p(x) and q(x) and computing how many more bits it takes to represent a state under q(x) instead of p(x). Another way to look at the cross entropy is that it is the expected value, under the true distribution, of the number of bits to encode some variable x. Because classification is often a supervised training problem, we can compute the true distribution p(x) while using the model to represent q(x). Thus by minimizing the cross entropy loss, we are slowly shifting q(x) to represent the true distribution p(x).
+## Cross Entropy & Machine Learning
 
+Although entropy is encountered frequently in ML, the most common occurrence is the cross entropy loss function. For classification tasks, the goal is to train a model to map an input $x$ to some distribution over n-classes. Under the assumption that all of the n-classes are possible states that the variable x can exists in, it logically follows from the previous discussion that a good approximating distribution is one with minimum uncertainty. The cross entropy loss function can be used to train an ml-model to approximate this minimum uncertainty distribution. The mathematical definition of cross entropy is given below.
 
-## Interesting observations
+$$
+H(p, x) = - \sum_{x \in \mathcal{X}} p(x) \log{q(x)}
+$$
 
-One interesting observation to see is that the definition of cross entropy constraints models to the training dataset. The cross entropy loss can only every truly model a distribution p(x) where the uncertainity in x is tied directly to the training dataset! Although it is not a shocking revelation for people used to training ML models, it's interesting to see the limitations enforced by the mathematics. One can partially get around this by having a truely representative dataset of the real world.
+This definition looks very similar to the definition of entropy with a slight distinction in the probability distributions. The cross entropy is a metric that compares two distributions $$q(x)$$ and $$p(x)$$, by measuring how much more inefficient it is to represent states from $$p(x)$$ using $$q(x)$$. Because classification is often a supervised training problem, we can compute the true distribution $$p(x)$$ while using the ml-model to represent $$q(x)$$. Thus, minimizing the cross entropy loss will slowly shift $$q(x)$$ to represent the true distribution $$p(x)$$.
 
+For example, suppose for a coin toss the $$p(x)$$ was 50/50. If we were training a machine learning model $$q(x)$$ and its current prediction were 25% heads and 75% tails, the cross entropy would be:
 
-## ELBO
+$$
+\begin{align*}
+& H(p,q)= - \sum_{x \in [Heads, Tails]} p(x) \log{q(x)}\\
+& H(p,q) = - [Heads + Tails] \\
+& H(p,q) = - [\frac{1}{2}\log{\frac{1}{4}} + \frac{1}{2}\log{\frac{3}{4}}]\\
+& H(p,q) = - [-1.208]\\
+& H(p,q) = 1.20
+\end{align*}
+$$
 
-Later on 
+As expected, the coss entropy(1.20) is greater than the true entropy(1) for a fair coin toss! Now lets see what happens to the cross entropy if we had computed the gradients and updated the weights for the model and the new model predicts the probability of heads is 40%.
 
-On the connection between machine learning and compression <--- D: (Machine Learning is compression)
+$$
+\begin{align*}
+& H(p,q)= - \sum_{x \in [Heads, Tails]} p(x) \log{q(x)}\\
+& H(p,q) = - [Heads + Tails] \\
+& H(p,q) = - [\frac{1}{2}\log{\frac{2}{5}} + \frac{1}{2}\log{\frac{3}{5}}]\\
+& H(p,q) = - [-1.029]\\
+& H(p,q) = 1.029
+\end{align*}
+$$
+
+As we expect, the entropy is getting closer to 1 as the distribution $$q(x)$$ better approximates $$p(x)$$! This shows how the cross entropy loss can be used as a loss function for approximating probability distributions!
