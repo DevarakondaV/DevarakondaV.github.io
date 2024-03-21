@@ -11,13 +11,13 @@ Lets take a brief look at entropy and its relevance in machine learning models. 
 
 ## Entropy
 
-Entropy, in the context of information theory, was introduced by Claude Shannon when he was a graduate student. Shannon defined entropy as the inherent uncertainty of a variable's possible state. Mathematically, the entropy of a given variable $x$ is defined below.
+Entropy, in the context of information theory, was introduced by Claude Shannon when he was a graduate student. Shannon defined entropy as the inherent uncertainty of a variable's possible state. Mathematically, the entropy of a given variable $$x$$ is defined below.
 
 $$
 h(x) = \sum_{x \in \mathcal{X}} p(x)\log{p(x)}
 $$
 
-Suppose a variable $x$ can only exist in one state. Then using the above equation, the entropy is calculated like below.
+Suppose a variable $$x$$ can only exist in one state. Then using the above equation, the entropy is calculated like below.
 
 $$
 \begin{align*}
@@ -56,7 +56,7 @@ An interesting thing about this result is that it's less than if the possible st
 
 ## Cross Entropy & Machine Learning
 
-Although entropy is encountered frequently in ML, the most common occurrence is the cross entropy loss function. For classification tasks, the goal is to train a model to map an input $x$ to some distribution over n-classes. Under the assumption that all of the n-classes are possible states that the variable x can exists in, it logically follows from the previous discussion that a good approximating distribution is one with minimum uncertainty. The cross entropy loss function can be used to train an ml-model to approximate this minimum uncertainty distribution. The mathematical definition of cross entropy is given below.
+Although entropy is encountered frequently in ML, the most common occurrence is the cross entropy loss function. For classification tasks, the goal is to train a model to map an input $$x$$ to some distribution over n-classes. Under the assumption that all of the n-classes are possible states that the variable $$x$$ can exists in, it logically follows from the previous discussion that a good approximating distribution is one with minimum uncertainty. The cross entropy loss function can be used to train an ml-model to approximate this minimum uncertainty distribution. The mathematical definition of cross entropy is given below.
 
 $$
 H(p, x) = - \sum_{x \in \mathcal{X}} p(x) \log{q(x)}
