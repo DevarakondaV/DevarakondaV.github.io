@@ -89,6 +89,8 @@ $$
 
 During training the following values are set
 
+During training, the goal is to learn $$p_{\theta}(x_{0:T})$$2
+
 ### Forward Process
 
 - T = 1000

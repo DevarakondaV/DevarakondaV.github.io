@@ -15,22 +15,122 @@ import torch.nn.functional as F
 from PIL import Image
 
 
+class ResBlock(torch.nn.Module):
+
+    def __init__(self, in_feature):
+        self._conv1 = torch.nn.Sequential(
+            Conv2d(in_features),
+        )
+        self._conv2 = torch.nn.Sequential(
+            Conv2d(in_features)
+        )
+        return
+
+    def forward(self, x):
+        out1 = self._conv1(x)
+        out = self._conv2(out1)
+        return out + x
+
+class Attention(torch.nn.Module):
+
+    def __init__(
+            self,
+            dimensions,
+            num_heads,
+            qkv_bias = False,
+            qk_scale = None,
+            attn_drop = 0,
+            proj_drop = 0
+    ):
+        super(Attention, self).__init__()
+        self.num_heads = num_heads
+        self.dimensions = dimensions
+        head_dim = self.dimensions // num_heads
+        self.scale = qk_scale or head_dim ** -0.5
+        self.qkv = torch.nn.Linear(
+            self.dimensions,
+            self.dimensions * 3,
+            bias=qkv_bias
+        )
+        self.attn_drop = torch.nn.Dropout(attn_drop)
+        self.proj = torch.nn.Linear(self.dimensions, self.dimensions)
+        self.proj_drop = torch.nn.Dropout(proj_drop)
+
+    def forward(self, x):
+        x = x.unsqueeze(0)
+        B, N, C = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k , v = qkv[0], qkv[1], qkv[2]
+        attn = (q @ k.transpose(-2, -1))*self.scale
+        attn = attn.softmax(dim = -1)
+        attn = self.attn_drop(attn)
+
+        x = (attn @ v).transpose(1,2).reshape(B, N, C)
+        x = self.proj(x)
+        x = self.proj_drop(x)
+        return x, attn
+
+class SelfAttentionBlock(torch.nn.Module):
+
+    def __init__(
+            self,
+            dimensions,
+            num_heads,
+            qkv_bias=False,
+            qk_scale=None,
+            drop=0,
+            attn_drop=0,
+            drop_path=0
+    )->None:
+        super(SelfAttentionBlock, self).__init__()
+        self.flatten = torch.nn.Flatten(1)
+        # self.patch_projection = torch.nn.Linear(
+        #     patch_size * patch_size, dimensions)
+        self.position_embedding = SinPositionEmbedding(dimensions, 10)
+        # self.position_embedding.type(torch.bfloat16)
+        self.attn = Attention(
+            dimensions, num_heads, qkv_bias, qk_scale, attn_drop, drop)
+        self.drop_path = torch.nn.Identity()
+        self.norm1 = torch.nn.LayerNorm(dimensions)
+        self.MLP = torch.nn.Sequential(
+            torch.nn.Linear(dimensions, 4 * dimensions),
+            torch.nn.GELU(),
+            torch.nn.Dropout(drop),
+            torch.nn.Linear(4 * dimensions, dimensions),
+            torch.nn.Dropout(drop)
+        )
+        self.norm2 = torch.nn.LayerNorm(dimensions)
+
+    def forward(self, x, t, return_attention=False):
+        t_enc = self.position_embedding(t)
+        x = self.flatten(x)
+        # x_p = self.patch_projection(x)
+        encoding = x + t_enc
+        y, attn = self.attn(self.norm1(encoding))
+        if return_attention:
+            return attn
+        x = x + self.drop_path(y)
+        x = x + self.drop_path(self.MLP(self.norm2(x)))
+        return x
+
+
 class SinPositionEmbedding(torch.nn.Module):
 
-    def __init__(self, D) -> None:
+    def __init__(self, D, T) -> None:
         super().__init__()
         self.D = D
+        self.T = T
+        self.N = 10000
 
-    def forward(self, pos, i):
-        exp1 = (2 * i) / self.D
-        exp2 = ((2*i) + 1) / self.D
-        p = 
-        p = torch.sin(pos / (1000**exp1))
-        p = torch.cos(pos / (1000**exp2))
-        return p
+    def forward(self, t):
+        i = torch.arange(self.D // 2)
+        embedding = torch.zeros(1, self.D, requires_grad=False)
+        embedding[:, 0::2] = torch.sin(t / (self.N ** (2 * i / self.D)))
+        embedding[:, 1::2] = torch.cos(t / (self.N ** (2 * i / self.D)))
+        return embedding
 
 class UNet(torch.nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, attn_dimension) -> None:
         """
         Unet model for semantic segmentation. Input Size: 3 x 32 x 32
         Output: 3 x 32 x 32
@@ -39,9 +139,10 @@ class UNet(torch.nn.Module):
 
         self.print_shapes=False
         super(UNet, self).__init__()
+        self.block = SelfAttentionBlock(attn_dimension, 64)
 
         self.down_block1=torch.nn.Sequential(
-            torch.nn.Conv2d(3, 64, 3, padding=1, bias=False),
+            torch.nn.Conv2d(1, 64, 3, padding=1, bias=False),
             torch.nn.BatchNorm2d(64),
             torch.nn.ReLU(inplace=True),
             torch.nn.Conv2d(64, 64, 3, padding=1, bias=False),
@@ -129,7 +230,7 @@ class UNet(torch.nn.Module):
             torch.nn.ReLU(inplace=True),
         )
 
-        self.conv19=torch.nn.Conv2d(64, 3, 1)
+        self.conv19=torch.nn.Conv2d(64, 1, 1)
 
 
     def crop(self, tensor, nHeight, nWidth):
@@ -138,8 +239,8 @@ class UNet(torch.nn.Module):
         tX, tY=(center_x - nWidth // 2), center_y - nHeight // 2
         return tensor[:, :, tX:tX + nWidth, tY:tY + nHeight]
 
-    def forward(self, x):
-
+    def forward(self, x, t):
+        
         out1=self.down_block1(x)
         x=self.mp1(out1)
 
@@ -169,6 +270,13 @@ class UNet(torch.nn.Module):
 
         if self.print_shapes:
             print("Last: ", out5.shape)
+
+        # print("SSSSSSS B: ", out5.shape)
+        x = self.block(out5, t)
+        # print("XX: ", x.shape)
+        # out5 = x.squeeze(1).unsqueeze(-1).unsqueeze(-1)
+        out5 = x.reshape(out5.shape)
+        # print("SSSSSSS: ", x.shape)
 
         x=self.upConv1(out5)
         diffY=out4.size()[2] - x.size()[2]
