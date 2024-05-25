@@ -11,7 +11,7 @@ Lets take a brief look at entropy and its relevance in machine learning models. 
 
 ## Entropy
 
-Entropy, in the context of information theory, was introduced by Claude Shannon when he was a graduate student. Shannon defined entropy as the inherent uncertainty of a variable's possible state. Mathematically, the entropy of a given variable $$x$$ is defined below.
+Entropy, in the context of information theory, was introduced by Claude Shannon. Shannon defined entropy as the inherent uncertainty of a variable's possible state. Mathematically, the entropy of a given variable $$x$$ is defined below.
 
 $$
 h(x) = \sum_{x \in \mathcal{X}} p(x)\log{p(x)}
